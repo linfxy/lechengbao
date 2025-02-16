@@ -1,0 +1,71 @@
+2．请按照您对前端网络层的理解，自定设计目标，设计一套多线程的前端网络框架，可用UML，线框图或伪代码表达，并辅以必要的文字说明。
+主要伪代码如下：
+public class NetworkManager {
+    Queue requestQueue;
+    ThreadPool threadPool;
+    
+    public void Init() {
+        threadPool = new ThreadPool();
+    }
+    
+    public void SendRequest(Request req) {
+        requestQueue.Enqueue(req);
+        threadPool.Execute(() => {
+            req.Execute();
+            HandleResponse(req);
+        });
+    }
+    
+    public void HandleResponse(Request req) {
+        if (req.isSuccessful()) {
+            // 处理成功
+        } else {
+            // 处理错误
+        }
+    }
+}
+
+public abstract class Request {
+    public abstract void Execute(string message) {};
+    public abstract void IsSuccessful() {};
+    public abstract void GetResponse() {};
+    public abstract void GetError() {};
+}
+
+public class HttpRequest : Request {
+    protected string url;
+    protected string method;
+    protected Map headers;
+    protected string body;
+    
+    public void Execute(string message) {
+        // 发送HTTP请求
+    }
+    
+    public void ParseResponse() {
+        // 解析HTTP响应
+    }
+
+    //TODO:其他需要实现的抽象类的方法
+}
+
+public class WebSocketRequest : Request {
+    protected string url;
+    protected WebSocket connection;
+    
+    public void Connect() {
+        // 建立WebSocket连接
+    }
+
+    public void OnClose(){
+        // 关闭WebSocket链接
+    }
+    
+    public void Execute() {
+        // 发送Socket数据
+    }
+    
+    public SendMessage(string message) {
+        connection.send(message)
+    }
+}

@@ -1,0 +1,83 @@
+1.1)实现 move(GameObject gameObject, Vector3 begin, Vector3 end, float time, bool pingpong){
+	}
+		使gameObject在time秒内，从begin移动到end，若pingpong为true，则在结束时使gameObject在time秒内从end移动到begin，如此往复。
+   2)在上题基础上实现 easeIn easeOut easeInOut 动画效果
+
+/*********************************伪代码by tian.gao*******************************/
+using UnityEngine;
+using Cysharp.Threading.Tasks;
+
+public class MoveManager
+{
+    //外部调用的移动方法
+    public void Move(GameObject gameObject, Vector3 begin, Vector3 end, float time, bool pingpong)
+    {
+        _Move(gameObject, begin, end, time, pingpong).Forget();
+    }
+
+    //内部处理
+    private async UniTask _Move(GameObject gameObject, Vector3 begin, Vector3 end, float time, bool pingpong)
+    {
+        float elapsedTime = 0f;
+        Vector3 curStart = begin;
+        Vector3 curEnd = end;
+
+        while (elapsedTime < time)
+        {
+            // 计算当前进度（0到1）
+            float t = Mathf.Clamp01(elapsedTime / time);
+            // 应用缓动函数
+            float easedT = EaseIn(t);
+            gameObject.transform.position = Vector3.Lerp(curStart, curEnd, easedT);
+
+            elapsedTime += Time.deltaTime;
+            await UniTask.Yield();
+        }
+
+        // 保护最终位置是结束位置
+        gameObject.transform.position = curEnd;
+
+        // 如果需要往返
+        if (pingpong)
+        {
+            // 反向移动 交换起点终点
+            elapsedTime = 0f;
+            Vector3 temp = curStart;
+            curStart = curEnd;
+            curEnd = temp;
+
+            while (elapsedTime < time)
+            {
+                float t = Mathf.Clamp01(elapsedTime / time);
+                float easedT = EaseIn(t);
+                gameObject.transform.position = Vector3.Lerp(curStart, curEnd, easedT);
+
+                elapsedTime += Time.deltaTime;
+                await UniTask.Yield();
+            }
+
+            gameObject.transform.position = curStart;
+
+            // 继续往返运动
+            Move(gameObject, curEnd, curStart, time, pingpong);
+        }
+    }
+
+    // 缓动函数：EaseIn
+    private float EaseIn(float t)
+    {
+        return t * t;
+    }
+
+    // 缓动函数：EaseOut
+    private float EaseOut(float t)
+    {
+        return - t * t + 2 * t;
+    }
+
+    // 缓动函数：EaseInOut
+    private float EaseInOut(float t)
+    {
+        return t < 0.5f ? 2 * t * t : (-2*t*t + 4t - 1);
+    }
+}
